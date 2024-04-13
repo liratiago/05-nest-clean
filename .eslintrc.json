@@ -1,6 +1,7 @@
 {
     "extends": "@rocketseat/eslint-config/node",
     "rules": {
-        "no-useless-controller": "off"
+        "no-useless-controller": "off",
+        "no-new": "off"
     }
 }
