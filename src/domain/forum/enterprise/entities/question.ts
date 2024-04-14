@@ -26,40 +26,14 @@ export class Question extends AggregateRoot<QuestionProps> {
     return this.props.title
   }
 
+  set title(title: string) {
+    this.props.title = title
+    this.props.slug = Slug.createFromText(title)
+    this.touch()
+  }
+
   get bestAnswerId() {
     return this.props.bestAnswerId
-  }
-
-  get content() {
-    return this.props.content
-  }
-
-  get slug() {
-    return this.props.slug
-  }
-
-  get createdAt() {
-    return this.props.createdAt
-  }
-
-  get updatedAt() {
-    return this.props.updatedAt
-  }
-
-  get attachments() {
-    return this.props.attachments
-  }
-
-  get isNew(): boolean {
-    return dayjs().diff(this.createdAt, 'days') <= 3
-  }
-
-  get excerpt() {
-    return this.content.substring(0, 120).trimEnd().concat('...')
-  }
-
-  private touch() {
-    this.props.updatedAt = new Date()
   }
 
   set bestAnswerId(bestAnswerId: UniqueEntityID | undefined) {
@@ -78,10 +52,8 @@ export class Question extends AggregateRoot<QuestionProps> {
     this.touch()
   }
 
-  set title(title: string) {
-    this.props.title = title
-    this.props.slug = Slug.createFromText(title)
-    this.touch()
+  get content() {
+    return this.props.content
   }
 
   set content(content: string) {
@@ -89,14 +61,42 @@ export class Question extends AggregateRoot<QuestionProps> {
     this.touch()
   }
 
+  get slug() {
+    return this.props.slug
+  }
+
   set slug(slug: Slug) {
     this.props.slug = slug
     this.touch()
   }
 
+  get createdAt() {
+    return this.props.createdAt
+  }
+
+  get updatedAt() {
+    return this.props.updatedAt
+  }
+
+  get attachments() {
+    return this.props.attachments
+  }
+
   set attachments(attachments: QuestionAttachmentList) {
     this.props.attachments = attachments
     this.touch()
+  }
+
+  get isNew(): boolean {
+    return dayjs().diff(this.createdAt, 'days') <= 3
+  }
+
+  get excerpt() {
+    return this.content.substring(0, 120).trimEnd().concat('...')
+  }
+
+  private touch() {
+    this.props.updatedAt = new Date()
   }
 
   static create(
