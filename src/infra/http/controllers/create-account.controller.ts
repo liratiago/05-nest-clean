@@ -1,15 +1,18 @@
 import {
+  BadRequestException,
     Body,
     ConflictException,
     Controller,
     HttpCode,
     Post,
+    UnauthorizedException,
     UsePipes,
   } from '@nestjs/common'
-  import { PrismaService } from '@/infra/database/prisma/prisma.service'
-  import { hash } from 'bcryptjs'
   import { TypeOf, z } from 'zod'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
+import { RegisterStudentUseCase } from '@/domain/forum/application/use-cases/register-student'
+import { WrongCredentialsError } from '@/domain/forum/application/use-cases/errors/wrong-credentials-error'
+import { StudentAlreadyExistsError } from '@/domain/forum/application/use-cases/errors/student-already-exists-error'
 
 
   const createAccountBodySchema = z.object({
@@ -22,7 +25,7 @@ import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
 
   @Controller('/accounts')
   export class CreateAccountController {
-    constructor(private prisma: PrismaService) {}
+    constructor(private registerStudent: RegisterStudentUseCase) {}
   
     @Post()
     @HttpCode(201)
@@ -30,26 +33,23 @@ import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
     async handle(@Body() body: CreateAccountBodySchema) {
       const { name, email, password } = body
   
-      const userWithSameEmail = await this.prisma.user.findUnique({
-        where: {
-          email,
-        },
+      const result = await this.registerStudent.execute({
+        name,
+        email,
+        password,
       })
+
+      if (result.isLeft()){
+        const error = result.value
   
-      if (userWithSameEmail) {
-        throw new ConflictException(
-          'User with same e-mail address already exists.',
-        )
+        switch (error.constructor ){
+          case StudentAlreadyExistsError:
+              throw new ConflictException(error.message)
+          dafeault:
+            throw new BadRequestException(error.message)
+        }
       }
 
-      const hashPassword = await hash(password, 8)
-  
-      await this.prisma.user.create({
-        data: {
-          name,
-          email,
-          password: hashPassword,
-        },
-      })
+            
     }
   }
