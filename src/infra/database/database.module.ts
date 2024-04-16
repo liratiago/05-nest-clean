@@ -15,11 +15,11 @@ import { PrismaStudentsRepository } from './prisma/repositories/prisma-students-
     PrismaService,
     {
       provide: QuestionsRepository,
-      useClass: PrismaQuestionsRepository, 
+      useClass: PrismaQuestionsRepository,
     },
     {
       provide: StudentsRepository,
-      useClass: PrismaStudentsRepository, 
+      useClass: PrismaStudentsRepository,
     },
     PrismaQuestionCommentsRepository,
     PrismaQuestionAttachmentsRepository,

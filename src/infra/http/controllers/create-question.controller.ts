@@ -1,10 +1,16 @@
-import { Controller, Post, UseGuards, Req, Body, BadRequestException } from '@nestjs/common'
+import {
+  Controller,
+  Post,
+  UseGuards,
+  Req,
+  Body,
+  BadRequestException,
+} from '@nestjs/common'
 import { CurrentUser } from '@/infra/auth/current-user-decorator'
 import { UserPayload } from '@/infra/auth/jwt.strategy'
 import { z } from 'zod'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
 import { CreateQuestionUseCase } from '@/domain/forum/application/use-cases/create-question'
-
 
 const createQuestionBodySchema = z.object({
   title: z.string(),
@@ -34,11 +40,8 @@ export class CreateQuestionController {
       attachmentsIds: [],
     })
 
-    if (result.isLeft()){
+    if (result.isLeft()) {
       throw new BadRequestException()
     }
-
   }
-
-
 }

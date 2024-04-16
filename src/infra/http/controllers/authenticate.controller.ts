@@ -2,8 +2,8 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Post, 
-  UnauthorizedException, 
+  Post,
+  UnauthorizedException,
   UsePipes,
 } from '@nestjs/common'
 
@@ -23,30 +23,25 @@ type AuthenticateBodySchema = z.infer<typeof authenticateBodySchema>
 @Controller('/sessions')
 @Public()
 export class AuthenticateController {
-  constructor(
-    private authenticateStudent: AuthenticateStudentUseCase
-  ) {}
+  constructor(private authenticateStudent: AuthenticateStudentUseCase) {}
 
   @Post()
   @UsePipes(new ZodValidationPipe(authenticateBodySchema))
   async handle(@Body() body: AuthenticateBodySchema) {
     const { email, password } = body
-    
-    const result = await this.authenticateStudent.execute(
-      {
-       email,
-       password,
-      }
-    )
 
-    if (result.isLeft()){
+    const result = await this.authenticateStudent.execute({
+      email,
+      password,
+    })
+
+    if (result.isLeft()) {
       const error = result.value
 
-      switch (error.constructor ){
+      switch (error.constructor) {
         case WrongCredentialsError:
-            throw new UnauthorizedException(error.message)
-        dafeault:
-          throw new BadRequestException(error.message)
+          throw new UnauthorizedException(error.message)
+          dafeault: throw new BadRequestException(error.message)
       }
     }
 

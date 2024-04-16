@@ -36,5 +36,4 @@ export abstract class Comment<
   private touch() {
     this.props.updatedAt = new Date()
   }
-
 }

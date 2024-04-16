@@ -20,7 +20,10 @@ import { CryptographyModule } from '../cryptography/cryptography.module'
     FetchRecentQuestionsController,
   ],
   providers: [
-   
-    CreateQuestionUseCase, FetchRecentQuestionsUseCase, RegisterStudentUseCase, AuthenticateStudentUseCase],
+    CreateQuestionUseCase,
+    FetchRecentQuestionsUseCase,
+    RegisterStudentUseCase,
+    AuthenticateStudentUseCase,
+  ],
 })
 export class HttpModule {}

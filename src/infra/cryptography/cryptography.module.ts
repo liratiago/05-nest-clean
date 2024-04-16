@@ -1,18 +1,17 @@
-import { Encrypter } from "@/domain/forum/application/cryptography/encrypter";
-import { Module } from "@nestjs/common";
-import { JwtEncrypter } from "./jwt-encrypter";
-import { HashComparer } from "@/domain/forum/application/cryptography/hash-comparer";
-import { brotliCompress } from "zlib";
-import { BcryptHasher } from "./bcrypt-hasher";
-import { HashGenerator } from "@/domain/forum/application/cryptography/hash-generator";
-
+import { Encrypter } from '@/domain/forum/application/cryptography/encrypter'
+import { Module } from '@nestjs/common'
+import { JwtEncrypter } from './jwt-encrypter'
+import { HashComparer } from '@/domain/forum/application/cryptography/hash-comparer'
+import { brotliCompress } from 'zlib'
+import { BcryptHasher } from './bcrypt-hasher'
+import { HashGenerator } from '@/domain/forum/application/cryptography/hash-generator'
 
 @Module({
-    providers: [
-        { provide: Encrypter, useClass: JwtEncrypter },
-        { provide: HashComparer, useClass: BcryptHasher},
-        { provide: HashGenerator, useClass: BcryptHasher},
-    ],
-    exports: [Encrypter, HashComparer, HashGenerator]
+  providers: [
+    { provide: Encrypter, useClass: JwtEncrypter },
+    { provide: HashComparer, useClass: BcryptHasher },
+    { provide: HashGenerator, useClass: BcryptHasher },
+  ],
+  exports: [Encrypter, HashComparer, HashGenerator],
 })
-export class CryptographyModule{}
+export class CryptographyModule {}

@@ -3,7 +3,6 @@ import { Reflector } from '@nestjs/core'
 import { IS_PUBLIC_KEY } from './public'
 import { AuthGuard } from '@nestjs/passport'
 
-
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
