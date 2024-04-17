@@ -1,6 +1,5 @@
 import {
   Controller,
-  UseGuards,
   Get,
   Query,
   BadRequestException,

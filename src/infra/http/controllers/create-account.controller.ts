@@ -46,7 +46,8 @@ export class CreateAccountController {
       switch (error.constructor) {
         case StudentAlreadyExistsError:
           throw new ConflictException(error.message)
-          dafeault: throw new BadRequestException(error.message)
+        
+        default: throw new BadRequestException(error.message)
       }
     }
   }

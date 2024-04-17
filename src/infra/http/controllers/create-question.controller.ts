@@ -11,6 +11,7 @@ import { UserPayload } from '@/infra/auth/jwt.strategy'
 import { z } from 'zod'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
 import { CreateQuestionUseCase } from '@/domain/forum/application/use-cases/create-question'
+import { Public } from '@/infra/auth/public'
 
 const createQuestionBodySchema = z.object({
   title: z.string(),
@@ -33,12 +34,16 @@ export class CreateQuestionController {
     const { title, content } = body
     const userId = user.sub
 
+    console.log('a')
+
     const result = await this.createQuestion.execute({
       title,
       content,
       authorId: userId,
       attachmentsIds: [],
     })
+
+    console.log('created')
 
     if (result.isLeft()) {
       throw new BadRequestException()
