@@ -1,4 +1,3 @@
-import { Entity } from '@/core/entities/entity'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { Optional } from '@/core/entities/types/optional'
 import { AnswerAttachmentList } from './answer-attachment-list'
@@ -11,7 +10,7 @@ export interface AnswerProps {
   attachments: AnswerAttachmentList
   content: string
   createdAt: Date
-  updatedAt?: Date
+  updatedAt?: Date | null
 }
 
 export class Answer extends AggregateRoot<AnswerProps> {
