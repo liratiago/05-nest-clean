@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  BadRequestException,
-} from '@nestjs/common'
+import { Controller, Get, Query, BadRequestException } from '@nestjs/common'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
 import { z } from 'zod'
 import { FetchRecentQuestionsUseCase } from '@/domain/forum/application/use-cases/fetch-recent-questions'
