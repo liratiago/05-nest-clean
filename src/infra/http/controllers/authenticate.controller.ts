@@ -41,11 +41,12 @@ export class AuthenticateController {
       switch (error.constructor) {
         case WrongCredentialsError:
           throw new UnauthorizedException(error.message)
-          dafeault: throw new BadRequestException(error.message)
+        default:
+          throw new BadRequestException(error.message)
       }
     }
 
-    const accessToken = result.value
+    const accessToken = result.value.accessToken
 
     return {
       access_token: accessToken,
