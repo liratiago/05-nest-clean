@@ -6,8 +6,8 @@ import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
 import { InMemoryAnswerAttachmentsRepository } from 'test/repositories/in-memory-answer-attachments-repository'
 import { makeAnswerAttachment } from 'test/factories/make-answer-attachment'
 
-let inMemoryAnswersRepository: InMemoryAnswersRepository
 let inMemoryAnswerAttachmentsRepository: InMemoryAnswerAttachmentsRepository
+let inMemoryAnswersRepository: InMemoryAnswersRepository
 let sut: EditAnswerUseCase
 
 describe('Edit Answer', () => {
@@ -17,6 +17,7 @@ describe('Edit Answer', () => {
     inMemoryAnswersRepository = new InMemoryAnswersRepository(
       inMemoryAnswerAttachmentsRepository,
     )
+
     sut = new EditAnswerUseCase(
       inMemoryAnswersRepository,
       inMemoryAnswerAttachmentsRepository,
@@ -31,6 +32,8 @@ describe('Edit Answer', () => {
       new UniqueEntityID('answer-1'),
     )
 
+    await inMemoryAnswersRepository.create(newAnswer)
+
     inMemoryAnswerAttachmentsRepository.items.push(
       makeAnswerAttachment({
         answerId: newAnswer.id,
@@ -42,17 +45,15 @@ describe('Edit Answer', () => {
       }),
     )
 
-    await inMemoryAnswersRepository.create(newAnswer)
-
     await sut.execute({
       answerId: newAnswer.id.toValue(),
       authorId: 'author-1',
-      content: 'Conteúdo teste 2',
+      content: 'Conteúdo teste',
       attachmentsIds: ['1', '3'],
     })
 
     expect(inMemoryAnswersRepository.items[0]).toMatchObject({
-      content: 'Conteúdo teste 2',
+      content: 'Conteúdo teste',
     })
 
     expect(
@@ -84,6 +85,48 @@ describe('Edit Answer', () => {
     })
 
     expect(result.isLeft()).toBe(true)
-    expect(result.value).instanceOf(NotAllowedError)
+    expect(result.value).toBeInstanceOf(NotAllowedError)
+  })
+
+  it('should sync new and removed attachment when editing an answer', async () => {
+    const newAnswer = makeAnswer(
+      {
+        authorId: new UniqueEntityID('author-1'),
+      },
+      new UniqueEntityID('question-1'),
+    )
+
+    await inMemoryAnswersRepository.create(newAnswer)
+
+    inMemoryAnswerAttachmentsRepository.items.push(
+      makeAnswerAttachment({
+        answerId: newAnswer.id,
+        attachmentId: new UniqueEntityID('1'),
+      }),
+      makeAnswerAttachment({
+        answerId: newAnswer.id,
+        attachmentId: new UniqueEntityID('2'),
+      }),
+    )
+
+    const result = await sut.execute({
+      answerId: newAnswer.id.toValue(),
+      authorId: 'author-1',
+      content: 'Conteúdo teste',
+      attachmentsIds: ['1', '3'],
+    })
+
+    expect(result.isRight()).toBe(true)
+    expect(inMemoryAnswerAttachmentsRepository.items).toHaveLength(2)
+    expect(inMemoryAnswerAttachmentsRepository.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          attachmentId: new UniqueEntityID('1'),
+        }),
+        expect.objectContaining({
+          attachmentId: new UniqueEntityID('3'),
+        }),
+      ]),
+    )
   })
 })

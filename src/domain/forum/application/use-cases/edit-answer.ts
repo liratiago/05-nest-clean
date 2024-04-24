@@ -6,7 +6,7 @@ import { NotAllowedError } from '@/core/errors/errors/not-allowed-error'
 import { AnswerAttachment } from '../../enterprise/entities/answer-attachment'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { AnswerAttachmentList } from '../../enterprise/entities/answer-attachment-list'
-import { AnswerAttachmentsRepository } from '../repositories/answer-attachments-repository copy'
+import { AnswerAttachmentsRepository } from '../repositories/answer-attachments-repository'
 import { Injectable } from '@nestjs/common'
 
 interface EditAnswerUseCaseRequest {

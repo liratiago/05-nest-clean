@@ -1,8 +1,8 @@
+import { DomainEvents } from '@/core/events/domain-events'
 import { PaginationParams } from '@/core/repositories/pagination-params'
+import { AnswerAttachmentsRepository } from '@/domain/forum/application/repositories/answer-attachments-repository'
 import { AnswersRepository } from '@/domain/forum/application/repositories/answers-repository'
 import { Answer } from '@/domain/forum/enterprise/entities/answer'
-import { AnswerAttachmentsRepository } from '@/domain/forum/application/repositories/answer-attachments-repository copy'
-import { DomainEvents } from '@/core/events/domain-events'
 
 export class InMemoryAnswersRepository implements AnswersRepository {
   public items: Answer[] = []
@@ -11,25 +11,14 @@ export class InMemoryAnswersRepository implements AnswersRepository {
     private answerAttachmentsRepository: AnswerAttachmentsRepository,
   ) {}
 
-  async create(answer: Answer) {
-    this.items.push(answer)
-    DomainEvents.dispatchEventsForAggregate(answer.id)
-  }
+  async findById(id: string) {
+    const answer = this.items.find((item) => item.id.toString() === id)
 
-  async delete(answer: Answer) {
-    const itemIndex = this.items.findIndex((item) => item.id === answer.id)
+    if (!answer) {
+      return null
+    }
 
-    this.items.splice(itemIndex, 1)
-
-    this.answerAttachmentsRepository.deleteManyByAnswerId(answer.id.toString())
-  }
-
-  async save(answer: Answer) {
-    const itemIndex = this.items.findIndex((item) => item.id === answer.id)
-
-    this.items[itemIndex] = answer
-
-    DomainEvents.dispatchEventsForAggregate(answer.id)
+    return answer
   }
 
   async findManyByQuestionId(questionId: string, { page }: PaginationParams) {
@@ -40,13 +29,36 @@ export class InMemoryAnswersRepository implements AnswersRepository {
     return answers
   }
 
-  async findById(id: string) {
-    const answer = this.items.find((item) => item.id.toString() === id)
+  async create(answer: Answer) {
+    this.items.push(answer)
 
-    if (!answer) {
-      return null
-    }
+    await this.answerAttachmentsRepository.createMany(
+      answer.attachments.getItems(),
+    )
 
-    return answer
+    DomainEvents.dispatchEventsForAggregate(answer.id)
+  }
+
+  async save(answer: Answer) {
+    const itemIndex = this.items.findIndex((item) => item.id === answer.id)
+
+    this.items[itemIndex] = answer
+
+    await this.answerAttachmentsRepository.createMany(
+      answer.attachments.getNewItems(),
+    )
+
+    await this.answerAttachmentsRepository.deleteMany(
+      answer.attachments.getRemovedItems(),
+    )
+
+    DomainEvents.dispatchEventsForAggregate(answer.id)
+  }
+
+  async delete(answer: Answer) {
+    const itemIndex = this.items.findIndex((item) => item.id === answer.id)
+
+    this.items.splice(itemIndex, 1)
+    this.answerAttachmentsRepository.deleteManyByAnswerId(answer.id.toString())
   }
 }
