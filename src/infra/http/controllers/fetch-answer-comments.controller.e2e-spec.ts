@@ -1,84 +1,90 @@
-import { AppModule } from '@/infra/app.module'
-import { DatabaseModule } from '@/infra/database/database.module'
-import { INestApplication } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { Test } from '@nestjs/testing'
-import request from 'supertest'
-import { AnswerFactory } from 'test/factories/make-answer'
-import { AnswerCommentFactory } from 'test/factories/make-answer-comment'
-import { QuestionFactory } from 'test/factories/make-question'
-import { StudentFactory } from 'test/factories/make-student'
+import { UniqueEntityID } from '@/core/entities/unique-entity-id'
+import { InMemoryAnswerCommentsRepository } from 'test/repositories/in-memory-answer-comments-repository'
+import { FetchAnswerCommentsUseCase } from '@/domain/forum/application/use-cases/fetch-answer-comments'
+import { makeAnswerComment } from 'test/factories/make-answer-comment'
+import { InMemoryStudentsRepository } from 'test/repositories/in-memory-students-repository'
+import { makeStudent } from 'test/factories/make-student'
 
-describe('Fetch answer comments (E2E)', () => {
-  let app: INestApplication
-  let studentFactory: StudentFactory
-  let questionFactory: QuestionFactory
-  let answerFactory: AnswerFactory
-  let answerCommentFactory: AnswerCommentFactory
-  let jwt: JwtService
+let inMemoryAnswerCommentsRepository: InMemoryAnswerCommentsRepository
+let inMemoryStudentsRepository: InMemoryStudentsRepository
+let sut: FetchAnswerCommentsUseCase
 
-  beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule, DatabaseModule],
-      providers: [
-        StudentFactory,
-        QuestionFactory,
-        AnswerFactory,
-        AnswerCommentFactory,
-      ],
-    }).compile()
-
-    app = moduleRef.createNestApplication()
-
-    studentFactory = moduleRef.get(StudentFactory)
-    questionFactory = moduleRef.get(QuestionFactory)
-    answerFactory = moduleRef.get(AnswerFactory)
-    answerCommentFactory = moduleRef.get(AnswerCommentFactory)
-    jwt = moduleRef.get(JwtService)
-
-    await app.init()
+describe('Fetch Answer Comments', () => {
+  beforeEach(() => {
+    inMemoryStudentsRepository = new InMemoryStudentsRepository()
+    inMemoryAnswerCommentsRepository = new InMemoryAnswerCommentsRepository(
+      inMemoryStudentsRepository,
+    )
+    sut = new FetchAnswerCommentsUseCase(inMemoryAnswerCommentsRepository)
   })
 
-  test('[GET] /answers/:answerId/comments', async () => {
-    const user = await studentFactory.makePrismaStudent()
+  it('should be able to fetch answer comments', async () => {
+    const student = makeStudent({ name: 'John Doe' })
 
-    const accessToken = jwt.sign({ sub: user.id.toString() })
+    inMemoryStudentsRepository.items.push(student)
 
-    const question = await questionFactory.makePrismaQuestion({
-      authorId: user.id,
+    const comment1 = makeAnswerComment({
+      answerId: new UniqueEntityID('answer-1'),
+      authorId: student.id,
     })
 
-    const answer = await answerFactory.makePrismaAnswer({
-      questionId: question.id,
-      authorId: user.id,
+    const comment2 = makeAnswerComment({
+      answerId: new UniqueEntityID('answer-1'),
+      authorId: student.id,
     })
 
-    await Promise.all([
-      answerCommentFactory.makePrismaAnswerComment({
-        authorId: user.id,
-        answerId: answer.id,
-        content: 'Comment 01',
-      }),
-      answerCommentFactory.makePrismaAnswerComment({
-        authorId: user.id,
-        answerId: answer.id,
-        content: 'Comment 02',
-      }),
-    ])
+    const comment3 = makeAnswerComment({
+      answerId: new UniqueEntityID('answer-1'),
+      authorId: student.id,
+    })
 
-    const answerId = answer.id.toString()
+    await inMemoryAnswerCommentsRepository.create(comment1)
+    await inMemoryAnswerCommentsRepository.create(comment2)
+    await inMemoryAnswerCommentsRepository.create(comment3)
 
-    const response = await request(app.getHttpServer())
-      .get(`/answers/${answerId}/comments`)
-      .set('Authorization', `Bearer ${accessToken}`)
-      .send()
+    const result = await sut.execute({
+      answerId: 'answer-1',
+      page: 1,
+    })
 
-    expect(response.statusCode).toBe(200)
-    expect(response.body).toEqual({
-      comments: expect.arrayContaining([
-        expect.objectContaining({ content: 'Comment 01' }),
-        expect.objectContaining({ content: 'Comment 01' }),
+    expect(result.value?.comments).toHaveLength(3)
+    expect(result.value?.comments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          author: 'John Doe',
+          commentId: comment1.id,
+        }),
+        expect.objectContaining({
+          author: 'John Doe',
+          commentId: comment2.id,
+        }),
+        expect.objectContaining({
+          author: 'John Doe',
+          commentId: comment3.id,
+        }),
       ]),
+    )
+  })
+
+  it('should be able to fetch paginated answer comments', async () => {
+    const student = makeStudent({ name: 'John Doe' })
+
+    inMemoryStudentsRepository.items.push(student)
+
+    for (let i = 1; i <= 22; i++) {
+      await inMemoryAnswerCommentsRepository.create(
+        makeAnswerComment({
+          answerId: new UniqueEntityID('answer-1'),
+          authorId: student.id,
+        }),
+      )
+    }
+
+    const result = await sut.execute({
+      answerId: 'answer-1',
+      page: 2,
     })
+
+    expect(result.value?.comments).toHaveLength(2)
   })
 })
